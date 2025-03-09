@@ -32,10 +32,10 @@ jobs:
         push: ${{ github.event_name == 'push' }}  # Push apenas em pushes para main
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/flask-app-hardened:latest #tag
         #Para fazer o build utilize o comando:
-        docker buildx build --push --platform linux/amd64,linux/arm64 -t italosantos/flask-app-hardened:latest .
+        #docker buildx build --push --platform linux/amd64,linux/arm64 -t italosantos/flask-app-hardened:latest .
 
     - name: Image scan (Trivy - Exemplo)
       run: |  # Exemplo de scan de vulnerabilidades
-        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/trivy-cache:/root/.cache aquasec/trivy image --exit-code 0 --severity HIGH,CRITICAL italosantos/flask-app-hardened:latest
+        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/trivy-cache:/root/.cache aquasec/trivy image --exit-code 0 --severity HIGH,CRITICAL ${{ secrets.DOCKERHUB_USERNAME }}/flask-app-hardened:latest
         # --exit-code 0:  não falha o workflow, mesmo se vulnerabilidades forem encontradas (para fins de demonstração). Em produção, use --exit-code 1.
         # --severity HIGH,CRITICAL:  só reporta vulnerabilidades altas e críticas.
