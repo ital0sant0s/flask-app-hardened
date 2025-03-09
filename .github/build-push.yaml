@@ -1,0 +1,41 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main  # Executa no push para a branch main
+  pull_request:
+    branches:
+      - main # Executa em pull requests para a main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest # Usa uma máquina virtual Ubuntu
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3 # Action para fazer checkout do código
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2 # Action para configurar o Buildx
+
+    - name: Login to Docker Hub (Opcional - se for fazer push)
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }} # Use secrets do GitHub
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: ${{ github.event_name == 'push' }}  # Push apenas em pushes para main
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/flask-app-hardened:latest #tag
+        #Para fazer o build utilize o comando:
+        docker buildx build --push --platform linux/amd64,linux/arm64 -t italosantos/flask-app-hardened:latest .
+
+    - name: Image scan (Trivy - Exemplo)
+      run: |  # Exemplo de scan de vulnerabilidades
+        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/trivy-cache:/root/.cache aquasec/trivy image --exit-code 0 --severity HIGH,CRITICAL italosantos/flask-app-hardened:latest
+        # --exit-code 0:  não falha o workflow, mesmo se vulnerabilidades forem encontradas (para fins de demonstração). Em produção, use --exit-code 1.
+        # --severity HIGH,CRITICAL:  só reporta vulnerabilidades altas e críticas.
